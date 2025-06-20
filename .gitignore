@@ -40,3 +40,4 @@ frontend.pid
 
 # Node modules in tests directory
 /tests/node_modules/
+test-trigger.txt
