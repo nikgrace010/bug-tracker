@@ -21,8 +21,13 @@ pipeline {
                         mkdir -p "$GOCACHE" "$GOMODCACHE"
 
                         # Run the tests
-                        go test -v ./...
+                        go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
                     '''
+                }
+                post {
+                    always {
+                        junit 'bugtracker-backend/backend-test-results.xml'
+                    }
                 }
                 echo '===== END: Backend Unit Tests ====='
             }
