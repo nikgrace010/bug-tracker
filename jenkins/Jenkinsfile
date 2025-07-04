@@ -1,47 +1,36 @@
 pipeline {
     agent any
-
+ 
     stages {
-        stage('Unit Tests - Backend') {
-            agent{
-                docker{
+        stage('Unit tests - backend') {
+            agent {
+                docker {
                     image 'snakee/golang-junit:1.21'
                     reuseNode true
                 }
             }
-
-             steps {
+            steps {
                 dir('bugtracker-backend') {
-                    sh '''
-                        # Set Go cache to a writable location
-                        export GOCACHE="$PWD/.cache/go-build"
-                        export GOMODCACHE="$PWD/.cache/go-mod"
-                        
-                        # Create cache directories
-                        mkdir -p "$GOCACHE" "$GOMODCACHE"
-                        
-                        # Run the tests
-                        go test -v ./...
-                    '''
-                }
+                    sh 'go test -v ./...'
+                }   
+            }
         }
-        stage('Unit Tests - Frontend'){
-            agent{
-                docker{
+ 
+        stage ('Unit tests - frontend') {
+            agent {
+                docker {
                     image 'node:20-alpine'
                     reuseNode true
                 }
             }
-
-            steps{
-            dir('bugtracker-frontend'){
-                sh '''
-                    npm ci
-                    npm test
-                '''
+            steps {
+                dir('bugtracker-frontend') {
+                    sh '''
+                       npm ci
+                       npm test 
+                    '''
+                }
             }
-            }
+        }
     }
-    }  
-}
 }
