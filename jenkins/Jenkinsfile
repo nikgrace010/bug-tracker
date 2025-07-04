@@ -1,6 +1,6 @@
 pipeline {
     agent any
- 
+
     stages {
         stage('Unit tests - backend') {
             agent {
@@ -11,22 +11,22 @@ pipeline {
             }
             steps {
                 dir('bugtracker-backend') {
-                     sh '''
+                    sh '''
                         # Set Go cache to a writable location
                         export GOCACHE="$PWD/.cache/go-build"
                         export GOMODCACHE="$PWD/.cache/go-mod"
-                        
+
                         # Create cache directories
                         mkdir -p "$GOCACHE" "$GOMODCACHE"
-                        
+
                         # Run the tests
                         go test -v ./...
                     '''
-                }   
+                }
             }
         }
- 
-        stage ('Unit tests - frontend') {
+
+        stage('Unit tests - frontend') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -36,8 +36,17 @@ pipeline {
             steps {
                 dir('bugtracker-frontend') {
                     sh '''
-                       npm ci
-                       npm test 
+                        # Clean up node_modules and lockfile to avoid architecture mismatch
+                        rm -rf node_modules package-lock.json .next .cache
+
+                        # Install dependencies for the correct architecture
+                        npm install
+
+                        # Optionally, force install SWC binaries for ARM64
+                        npm install -D @next/swc-linux-arm64-gnu @next/swc-linux-arm64-musl || true
+
+                        # Run tests
+                        npm test
                     '''
                 }
             }
