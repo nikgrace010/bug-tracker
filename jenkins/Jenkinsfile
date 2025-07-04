@@ -10,6 +10,7 @@ pipeline {
                 }
             }
             steps {
+                echo '===== START: Backend Unit Tests ====='
                 dir('bugtracker-backend') {
                     sh '''
                         # Set Go cache to a writable location
@@ -23,6 +24,7 @@ pipeline {
                         go test -v ./...
                     '''
                 }
+                echo '===== END: Backend Unit Tests ====='
             }
         }
 
@@ -34,6 +36,7 @@ pipeline {
                 }
             }
             steps {
+                echo '===== START: Frontend Unit Tests ====='
                 dir('bugtracker-frontend') {
                     sh '''
                         # Clean up node_modules and lockfile to avoid architecture mismatch
@@ -49,6 +52,7 @@ pipeline {
                         npm test
                     '''
                 }
+                echo '===== END: Frontend Unit Tests ====='
             }
         }
     }
