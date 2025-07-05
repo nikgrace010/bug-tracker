@@ -67,6 +67,9 @@ pipeline {
 
                         # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
                         npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
+
+                        mkdir -p reports
+                        mv coverage reports/
                     '''
                 }
                 echo '===== END: Frontend Unit Tests ====='
@@ -74,6 +77,11 @@ pipeline {
             post {
                 always {
                     junit 'bugtracker-frontend/test-results.xml'
+                    publishHTML targets:[
+                        reportDir: 'bugtracker-frontend/reports/coverage'
+                        reportFiles: 'index.html'
+                        reportName: 'Frontend Coverage Report'
+                    ]
                 }
             }
         }
