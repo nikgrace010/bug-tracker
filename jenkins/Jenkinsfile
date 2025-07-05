@@ -77,7 +77,7 @@ pipeline {
             post {
                 always {
                     junit 'bugtracker-frontend/test-results.xml'
-                    publishHTML target:[
+                    publishHTML target: [
                         reportDir: 'bugtracker-frontend/reports/coverage'
                         reportFiles: 'index.html'
                         reportName: 'Frontend Coverage Report'
