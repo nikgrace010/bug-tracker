@@ -2,94 +2,92 @@ pipeline {
     agent any
 
     stages {
-        stage('Execute Unit tests'){
-            parallel{
-               
-                    stage('Unit tests - backend') {
-                        agent {
-                            docker {
-                                image 'snakee/golang-junit:1.21'
-                                reuseNode true
-                            }
+        stage('Execute Unit tests') {
+            parallel {
+                stage('Unit tests - backend') {
+                    agent {
+                        docker {
+                            image 'snakee/golang-junit:1.21'
+                            reuseNode true
                         }
-                        steps {
-                            echo '===== START: Backend Unit Tests ====='
-                            dir('bugtracker-backend') {
-                                sh '''
-                                    # Set Go cache to a writable location
-                                    export GOCACHE="$PWD/.cache/go-build"
-                                    export GOMODCACHE="$PWD/.cache/go-mod"
+                    }
+                    steps {
+                        echo '===== START: Backend Unit Tests ====='
+                        dir('bugtracker-backend') {
+                            sh '''
+                                # Set Go cache to a writable location
+                                export GOCACHE="$PWD/.cache/go-build"
+                                export GOMODCACHE="$PWD/.cache/go-mod"
 
-                                    # Create cache directories
-                                    mkdir -p "$GOCACHE" "$GOMODCACHE"
+                                # Create cache directories
+                                mkdir -p "$GOCACHE" "$GOMODCACHE"
 
-                                    # Run the tests and generate JUnit XML
-                                    go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
+                                # Run the tests and generate JUnit XML
+                                go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
 
-                                    # Generate coverage report
-                                    go test -coverprofile=coverage.out -covermode=atomic ./...
-                                    go tool cover -html=coverage.out -o coverage.html
+                                # Generate coverage report
+                                go test -coverprofile=coverage.out -covermode=atomic ./...
+                                go tool cover -html=coverage.out -o coverage.html
 
-                                    mkdir -p reports
-                                    mv coverage.html reports/
-                                '''
-                            }
-                            echo '===== END: Backend Unit Tests ====='
+                                mkdir -p reports
+                                mv coverage.html reports/
+                            '''
                         }
-                        post {
-                            always {
-                                junit 'bugtracker-backend/backend-test-results.xml'
-                                publishHTML target:[
-                                    reportDir: 'bugtracker-backend/reports',
-                                    reportFiles: 'coverage.html',
-                                    reportName: 'Backend Coverage Report'
-                                ]
-                            }
+                        echo '===== END: Backend Unit Tests ====='
+                    }
+                    post {
+                        always {
+                            junit 'bugtracker-backend/backend-test-results.xml'
+                            publishHTML target: [
+                                reportDir: 'bugtracker-backend/reports',
+                                reportFiles: 'coverage.html',
+                                reportName: 'Backend Coverage Report'
+                            ]
                         }
-                    } 
-
-
-                    stage('Unit tests - frontend') {
-                agent {
-                    docker {
-                        image 'node:20-alpine'
-                        reuseNode true
                     }
                 }
-                steps {
-                    echo '===== START: Frontend Unit Tests ====='
-                    dir('bugtracker-frontend') {
-                        sh '''
-                            # Clean up node_modules and lockfile to avoid architecture mismatch
-                            rm -rf node_modules package-lock.json .next .cache
 
-                            # Install dependencies for the correct architecture
-                            npm install
-
-                            # Optionally, force install SWC binaries for ARM64
-                            npm install -D @next/swc-linux-arm64-gnu @next/swc-linux-arm64-musl || true
-
-                            # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
-                            npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
-
-                            mkdir -p reports
-                            mv coverage reports/
-                        '''
+                stage('Unit tests - frontend') {
+                    agent {
+                        docker {
+                            image 'node:20-alpine'
+                            reuseNode true
+                        }
                     }
-                    echo '===== END: Frontend Unit Tests ====='
-                }
-                post {
-                    always {
-                        junit 'bugtracker-frontend/test-results.xml'
-                        publishHTML target:[
-                            reportDir: 'bugtracker-frontend/reports/coverage',
-                            reportFiles: 'index.html',
-                            reportName: 'Frontend Coverage Report'
-                        ]
+                    steps {
+                        echo '===== START: Frontend Unit Tests ====='
+                        dir('bugtracker-frontend') {
+                            sh '''
+                                # Clean up node_modules and lockfile to avoid architecture mismatch
+                                rm -rf node_modules package-lock.json .next .cache
+
+                                # Install dependencies for the correct architecture
+                                npm install
+
+                                # Optionally, force install SWC binaries for ARM64
+                                npm install -D @next/swc-linux-arm64-gnu @next/swc-linux-arm64-musl || true
+
+                                # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
+                                npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
+
+                                mkdir -p reports
+                                mv coverage reports/
+                            '''
+                        }
+                        echo '===== END: Frontend Unit Tests ====='
+                    }
+                    post {
+                        always {
+                            junit 'bugtracker-frontend/test-results.xml'
+                            publishHTML target: [
+                                reportDir: 'bugtracker-frontend/reports/coverage',
+                                reportFiles: 'index.html',
+                                reportName: 'Frontend Coverage Report'
+                            ]
+                        }
                     }
                 }
-            }    
             }
-        }    
+        }
     }
 }
