@@ -20,16 +20,16 @@ pipeline {
                         # Create cache directories
                         mkdir -p "$GOCACHE" "$GOMODCACHE"
 
-                        # Run the tests
+                        # Run the tests and generate JUnit XML
                         go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
                     '''
                 }
-                post {
-                    always {
-                        junit 'bugtracker-backend/backend-test-results.xml'
-                    }
-                }
                 echo '===== END: Backend Unit Tests ====='
+            }
+            post {
+                always {
+                    junit 'bugtracker-backend/backend-test-results.xml'
+                }
             }
         }
 
@@ -53,14 +53,14 @@ pipeline {
                         # Optionally, force install SWC binaries for ARM64
                         npm install -D @next/swc-linux-arm64-gnu @next/swc-linux-arm64-musl || true
 
-                        # Run tests
-                        npm test
+                        # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
+                        npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
                     '''
                 }
                 echo '===== END: Frontend Unit Tests ====='
             }
             post {
-                always{
+                always {
                     junit 'bugtracker-frontend/test-results.xml'
                 }
             }
