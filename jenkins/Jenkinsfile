@@ -22,6 +22,13 @@ pipeline {
 
                         # Run the tests and generate JUnit XML
                         go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
+
+                        # Generate coverage report
+                        go test -coverprofile=coverage.out -covermode=atomic ./...
+                        go tool cover -html=coverage.out -o coverage.html
+
+                        mkdir -p reports
+                        mv coverage.html reports/
                     '''
                 }
                 echo '===== END: Backend Unit Tests ====='
@@ -29,6 +36,11 @@ pipeline {
             post {
                 always {
                     junit 'bugtracker-backend/backend-test-results.xml'
+                    publishHTML target:[
+                        reportDir: 'bugtracker-backend/reports',
+                        reportFiles: 'coverage.html',
+                        reportName: 'Backend Coverage Report'
+                    ]
                 }
             }
         }
