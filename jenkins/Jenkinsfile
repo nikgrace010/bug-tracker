@@ -30,7 +30,7 @@ pipeline {
                                 go tool cover -html=coverage.out -o coverage.html
 
                                 mkdir -p reports
-                                mv coverage.html reports/
+                                mv -f coverage.html reports/
                             '''
                         }
                         echo '===== END: Backend Unit Tests ====='
@@ -50,7 +50,7 @@ pipeline {
                 stage('Unit tests - frontend') {
                     agent {
                         docker {
-                            image 'node:20-alpine'
+                            image 'node:20-bullseye' // Use Debian-based image for glibc compatibility
                             reuseNode true
                         }
                     }
@@ -64,14 +64,11 @@ pipeline {
                                 # Install dependencies for the correct architecture
                                 npm install
 
-                                # Optionally, force install SWC binaries for ARM64
-                                npm install -D @next/swc-linux-arm64-gnu @next/swc-linux-arm64-musl || true
-
                                 # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
                                 npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
 
                                 mkdir -p reports
-                                mv coverage reports/
+                                mv -f coverage reports/
                             '''
                         }
                         echo '===== END: Frontend Unit Tests ====='
@@ -89,11 +86,11 @@ pipeline {
                 }
             }
         }
+    }
 
-        post{
-            always{
-                cleanWs()
-            }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
