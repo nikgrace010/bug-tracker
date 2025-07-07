@@ -95,6 +95,7 @@ pipeline {
                 }
             }
             steps {
+                echo '===== START: Launch Application step ====='
                 sh 'docker compose up --build -d'
             }
         }
