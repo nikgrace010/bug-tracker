@@ -15,20 +15,12 @@ pipeline {
                         echo '===== START: Backend Unit Tests ====='
                         dir('bugtracker-backend') {
                             sh '''
-                                # Set Go cache to a writable location
                                 export GOCACHE="$PWD/.cache/go-build"
                                 export GOMODCACHE="$PWD/.cache/go-mod"
-
-                                # Create cache directories
                                 mkdir -p "$GOCACHE" "$GOMODCACHE"
-
-                                # Run the tests and generate JUnit XML
                                 go test -v ./... 2>&1 | go-junit-report > backend-test-results.xml
-
-                                # Generate coverage report
                                 go test -coverprofile=coverage.out -covermode=atomic ./...
                                 go tool cover -html=coverage.out -o coverage.html
-
                                 mkdir -p reports
                                 mv -f coverage.html reports/
                             '''
@@ -50,7 +42,7 @@ pipeline {
                 stage('Unit tests - frontend') {
                     agent {
                         docker {
-                            image 'node:20-bullseye' // Use Debian-based image for glibc compatibility
+                            image 'node:20-bullseye'
                             reuseNode true
                         }
                     }
@@ -58,15 +50,9 @@ pipeline {
                         echo '===== START: Frontend Unit Tests ====='
                         dir('bugtracker-frontend') {
                             sh '''
-                                # Clean up node_modules and lockfile to avoid architecture mismatch
                                 rm -rf node_modules package-lock.json .next .cache
-
-                                # Install dependencies for the correct architecture
                                 npm install
-
-                                # Run tests and generate JUnit XML (ensure your test runner outputs JUnit XML to test-results.xml)
                                 npm test -- --reporters=jest-junit --outputFile=test-results.xml || true
-
                                 mkdir -p reports
                                 mv -f coverage reports/
                             '''
@@ -86,9 +72,10 @@ pipeline {
                 }
             }
         }
-        stage('Launch Application'){
+
+        stage('Launch Application') {
             agent {
-                docker{
+                docker {
                     image 'docker:27.5.1'
                     reuseNode true
                     args '-v /var/run/docker.sock:/var/run/docker.sock -u 0'
@@ -100,9 +87,9 @@ pipeline {
             }
         }
 
-        stage('API Tests'){
-            agent{
-                docker{
+        stage('API Tests') {
+            agent {
+                docker {
                     image 'mcr.microsoft.com/playwright:v1.50.0-jammy'
                     reuseNode true
                     args '-u 0 --network=host'
@@ -110,27 +97,26 @@ pipeline {
             }
             steps {
                 echo '===== START: API Tests ====='
-                dir('tests-api'){
+                dir('tests-api') {
                     sh 'npx wait-port http://localhost:8080/api/health -t 30000'
-
                     sh 'npm ci'
-                    sh 'npx playwright test'                        
+                    sh 'npx playwright test'
                 }
                 echo '===== END: API Tests ====='
             }
-        }
-        post {
-            always {
-                junit 'tests-api/test-results/results.xml'
-                publishHTML target:[
-                    reportDir: 'tests-api/playwright-report',
-                    reportFiles: 'index.html',
-                    reportName: 'Playwright API Test Report'
-                ]
+            post {
+                always {
+                    junit 'tests-api/test-results/results.xml'
+                    publishHTML target: [
+                        reportDir: 'tests-api/playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright API Test Report'
+                    ]
+                }
             }
         }
-
     }
+
     post {
         always {
             cleanWs()
