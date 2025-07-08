@@ -115,6 +115,7 @@ pipeline {
                 }
             }
         }
+
         stage('E2E Tests') {
             agent {
                 docker {
@@ -131,6 +132,7 @@ pipeline {
                 }
                 echo '===== END: E2E Tests ====='
             }
+        }
     }
 
     post {
