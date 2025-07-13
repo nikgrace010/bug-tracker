@@ -40,6 +40,13 @@ jobs:
           cache: "npm"
           cache-dependency-path: bugtracker-frontend/package-lock.json
 
+      # Clean install: Remove node_modules and lockfile, then install fresh
+      - name: Clean and Install Dependencies
+        working-directory: ./bugtracker-frontend
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
       - name: Execute Frontend Unit Tests
         working-directory: ./bugtracker-frontend
         run: |
