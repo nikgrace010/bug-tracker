@@ -33,8 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update npm to latest version
-        run: npm install -g npm@latest
+      # Remove the npm global update step to avoid EACCES errors
 
       - name: Remove lockfile and node_modules
         working-directory: ./bugtracker-frontend
@@ -45,6 +44,15 @@ jobs:
         working-directory: ./bugtracker-frontend
         run: npm install
 
+      - name: Install jest-junit reporter
+        working-directory: ./bugtracker-frontend
+        run: npm install --save-dev jest-junit
+
+      - name: Configure Jest to use jest-junit reporter
+        working-directory: ./bugtracker-frontend
+        run: |
+          echo "module.exports = { reporters: ['default', ['jest-junit', { outputDirectory: './test-results', outputName: 'test-results.xml' }] ] };" > jest.config.js
+
       - name: Execute Frontend Unit Tests (serial mode for clarity)
         working-directory: ./bugtracker-frontend
         run: npm test -- --runInBand
@@ -54,5 +62,5 @@ jobs:
         if: always()
         with:
           name: Frontend Unit Tests Report
-          path: bugtracker-frontend/test-results.xml
+          path: bugtracker-frontend/test-results/test-results.xml
           reporter: jest-junit
