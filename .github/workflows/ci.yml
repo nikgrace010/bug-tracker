@@ -153,7 +153,7 @@ jobs:
           npx playwright test
 
       - name: Stop Application
-        run: dpcker compose down
+        run: docker compose down
 
       - name: Upload API Test Results
         if: always()
