@@ -59,6 +59,8 @@ jobs:
 
   unit-tests-frontend:
     runs-on: ubuntu-latest
+    outputs:
+      coverage: ${{ steps.test-frontend.outputs.report }}
     permissions:
       contents: read
       checks: write
@@ -81,6 +83,7 @@ jobs:
           npm install
 
       - name: Execute Frontend Unit Tests
+        id: test-frontend
         working-directory: ./bugtracker-frontend
         run: |
           npm ci
@@ -90,6 +93,10 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat full_output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat full_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Publish Frontend Test Results
         uses: dorny/test-reporter@v1
@@ -101,7 +108,7 @@ jobs:
 
   create-coverage-comment:
     if: github.event_name == 'pull_request'
-    needs: [unit-tests-backend]
+    needs: [unit-tests-backend, unit-tests-frontend]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -116,5 +123,14 @@ jobs:
             ${{ needs.unit-tests-backend.outputs.coverage }}
              ```
 
+      - name: Craete Frontend Coverage Comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Frontend Test Coverage Report
+            ```
+            ${{ needs.unit-tests-frontend.outputs.coverage }}
+             ```             
 
 
