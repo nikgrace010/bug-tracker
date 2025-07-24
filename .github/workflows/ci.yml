@@ -219,7 +219,7 @@ jobs:
           path: summary.json
           retention-days: 30
 
-      - name: Upload Performance HTMl report
+      - name: Upload Performance HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
